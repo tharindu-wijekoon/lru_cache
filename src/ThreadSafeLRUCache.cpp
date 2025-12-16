@@ -1,15 +1,18 @@
 // ThreadSafeLRUCache.cpp
 #include "ThreadSafeLRUCache.h"
 
-ThreadSafeLRUCache::ThreadSafeLRUCache(size_t capacity) : cache_(capacity) {}
+template<typename K, typename V, typename Hash>
+ThreadSafeLRUCache<K, V, Hash>::ThreadSafeLRUCache(size_t capacity, std::chrono::seconds ttl) : cache_(capacity, ttl) {}
 
-int ThreadSafeLRUCache::get(int key) {
+template<typename K, typename V, typename Hash>
+bool ThreadSafeLRUCache<K, V, Hash>::get(const K& key, V& value) {
     // LRU get() mutates internal state → must be exclusive
     std::unique_lock<std::shared_mutex> lock(mutex_);
-    return cache_.get(key);
+    return cache_.get(key, value);
 }
 
-void ThreadSafeLRUCache::put(int key, int value) {
+template<typename K, typename V, typename Hash>
+void ThreadSafeLRUCache<K, V, Hash>::put(const K& key, const V& value) {
     std::unique_lock<std::shared_mutex> lock(mutex_);
-    cache_.put(key, value);
+    return cache_.put(key, value);
 }

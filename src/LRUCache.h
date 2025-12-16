@@ -1,23 +1,35 @@
 // LRUCache.h
-#ifndef LRU_CACHE_H
-#define LRU_CACHE_H
-
-#include <cstddef>
 #include <unordered_map>
 #include <list>
-#include <utility>
+#include <chrono>
 
+template<
+    typename K,
+    typename V,
+    typename Hash = std::hash<K>
+>
 class LRUCache {
 public:
-    explicit LRUCache(size_t capacity);
+    explicit LRUCache(
+        size_t capacity,
+        std::chrono::seconds ttl = std::chrono::seconds(0)
+    );
 
-    int get(int key);
-    void put(int key, int value);
+    bool get(const K& key, V& value);
+    void put(const K& key, const V& value);
 
 private:
-    size_t capacity_;
-    std::list<std::pair<int, int>> cache_list_;
-    std::unordered_map<int, std::list<std::pair<int, int>>::iterator> cache_map_;
-};
+    struct Entry {
+        K key;
+        V value;
+        std::chrono::steady_clock::time_point expires_at;
+    };
 
-#endif // LRU_CACHE_H
+    size_t capacity_;
+    std::chrono::seconds ttl_;
+
+    std::list<Entry> cache_list_;
+    std::unordered_map<K, std::list<Entry>::iterator, Hash> cache_map_;
+
+    bool is_expired(const Entry& entry) const;
+};
